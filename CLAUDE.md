@@ -57,5 +57,5 @@ Progress marks, next to the milestone title in MILESTONES.md: no mark = not buil
 
 ## Run commands
 > Claude fills these in as soon as the app can run (normally at the end of Milestone 1), and updates them if they change.
-- **Run (dev):** `<command>`
-- **Test:** `<command, or "none">`
+- **Run (dev):** `npm run dev` (opens at http://localhost:5173/Simon-game/)
+- **Test:** `npm run test` (also `npm run typecheck`, `npm run build`)

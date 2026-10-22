@@ -40,3 +40,6 @@ Thumbs.db
 # Original spec copies (already in spec/)
 simon-spec/
 simon-spec*.zip
+
+# TypeScript build cache
+*.tsbuildinfo

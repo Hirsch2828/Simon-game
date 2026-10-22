@@ -1,0 +1,26 @@
+.primary-button {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 14px var(--space-4);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-blue);
+  color: var(--color-white);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 163, 255, 0.3);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.primary-button:active {
+  filter: brightness(0.92);
+}
+
+.primary-button:focus-visible {
+  outline: 3px solid var(--color-white);
+  outline-offset: 3px;
+}
