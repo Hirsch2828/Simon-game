@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <clipPath id="board"><circle cx="256" cy="256" r="200"/></clipPath>
+  </defs>
+  <rect width="512" height="512" fill="#0A1628"/>
+  <circle cx="256" cy="256" r="208" fill="#0F0F0F"/>
+  <g clip-path="url(#board)">
+    <rect x="56" y="56" width="200" height="200" fill="#00D26A"/>
+    <rect x="256" y="56" width="200" height="200" fill="#FF3B30"/>
+    <rect x="56" y="256" width="200" height="200" fill="#FFD600"/>
+    <rect x="256" y="256" width="200" height="200" fill="#00A3FF"/>
+    <rect x="244" y="40" width="24" height="432" fill="#0F0F0F"/>
+    <rect x="40" y="244" width="432" height="24" fill="#0F0F0F"/>
+  </g>
+  <circle cx="256" cy="256" r="70" fill="#0F0F0F"/>
+  <circle cx="256" cy="256" r="70" fill="none" stroke="#1E3556" stroke-width="6"/>
+</svg>

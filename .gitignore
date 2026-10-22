@@ -43,3 +43,6 @@ simon-spec*.zip
 
 # TypeScript build cache
 *.tsbuildinfo
+
+# PWA dev output
+dev-dist/
