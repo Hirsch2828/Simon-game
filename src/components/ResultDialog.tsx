@@ -5,8 +5,12 @@ import './ResultDialog.css';
 interface ResultDialogProps {
   outcome: 'won' | 'lost';
   completedRounds: number;
+  /** Saving this result to history failed (ADR-4) */
+  saveError?: boolean;
   onConfirm: () => void;
 }
+
+export const SAVE_ERROR_MESSAGE = 'לא הצלחנו לשמור את התוצאה בהיסטוריה.';
 
 export function completedRoundsText(n: number): string {
   if (n === 1) return 'השלמת שלב אחד';
@@ -14,7 +18,7 @@ export function completedRoundsText(n: number): string {
 }
 
 // End-of-game overlay over the board (DESIGN §1.1 win / loss states)
-export default function ResultDialog({ outcome, completedRounds, onConfirm }: ResultDialogProps) {
+export default function ResultDialog({ outcome, completedRounds, saveError = false, onConfirm }: ResultDialogProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     buttonRef.current?.focus();
@@ -35,6 +39,11 @@ export default function ResultDialog({ outcome, completedRounds, onConfirm }: Re
         <p className="result-dialog__detail">
           {won ? 'השלמת את כל 10 השלבים' : completedRoundsText(completedRounds)}
         </p>
+        {saveError && (
+          <p className="result-dialog__error" role="alert">
+            {SAVE_ERROR_MESSAGE}
+          </p>
+        )}
         <PrimaryButton ref={buttonRef} onClick={onConfirm}>
           אישור
         </PrimaryButton>

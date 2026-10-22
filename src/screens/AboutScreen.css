@@ -30,3 +30,49 @@
   font-size: var(--fs-caption);
   text-align: center;
 }
+
+.about-screen__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.about-screen__error {
+  margin-bottom: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid rgba(255, 59, 48, 0.5);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 59, 48, 0.12);
+  color: #ffb3ae;
+  font-size: var(--fs-caption);
+  text-align: center;
+}
+
+.about-screen__delete {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: 12px var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-white);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.about-screen__delete:active {
+  filter: brightness(1.15);
+}
+
+.about-screen__delete:focus-visible {
+  outline: 3px solid var(--color-white);
+  outline-offset: 3px;
+}

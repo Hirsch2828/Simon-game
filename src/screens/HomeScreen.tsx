@@ -8,9 +8,11 @@ import './HomeScreen.css';
 
 interface HomeScreenProps {
   game: GameController;
+  /** Saving the finished game to history failed */
+  saveError?: boolean;
 }
 
-export default function HomeScreen({ game }: HomeScreenProps) {
+export default function HomeScreen({ game, saveError = false }: HomeScreenProps) {
   const { state, shownRound, litColor, resultVisible, audioError } = game;
   const { status } = state;
 
@@ -51,7 +53,12 @@ export default function HomeScreen({ game }: HomeScreenProps) {
         {hint && <p className="home-screen__hint">{hint}</p>}
       </div>
       {resultVisible && (status === 'won' || status === 'lost') && (
-        <ResultDialog outcome={status} completedRounds={state.completedRounds} onConfirm={game.dismiss} />
+        <ResultDialog
+          outcome={status}
+          completedRounds={state.completedRounds}
+          saveError={saveError}
+          onConfirm={game.dismiss}
+        />
       )}
     </main>
   );
