@@ -195,7 +195,7 @@ type HistoryData = {
 
 **נתיב פריסה:**
 
-- ה-Repository של הפרויקט נקרא `Simon` ויושב בחשבון ה-GitHub של המשתמש, `https://github.com/<user>/Simon` (את `<user>` קח מכתובת ה-remote של ה-repo המקומי), ולכן כתובת ה-Production היא `https://<user>.github.io/Simon/` ויש לקבוע `base: "/Simon/"` ב-Vite. הנתיב **רגיש לאותיות גדולות וקטנות** – `Simon` ב-S גדולה, בדיוק כשם ה-Repository.
+- ה-Repository של הפרויקט נקרא `Simon-game` ויושב בחשבון ה-GitHub של המשתמש, `https://github.com/<user>/Simon-game` (את `<user>` קח מכתובת ה-remote של ה-repo המקומי), ולכן כתובת ה-Production היא `https://<user>.github.io/Simon-game/` ויש לקבוע `base: "/Simon-game/"` ב-Vite. הנתיב **רגיש לאותיות גדולות וקטנות** – `Simon-game` ב-S גדולה, בדיוק כשם ה-Repository.
 - GitHub Pages בחשבון GitHub Free זמין ל-Repository **ציבורי** בלבד. לפני פריסה ראשונה יש לוודא שה-Repository ציבורי (Settings → General → Danger Zone → Change visibility), או שהחשבון בתוכנית בתשלום.
 - באופן כללי, לפרויקט המתארח ב-`https://<user>.github.io/<repo>/` קובעים `base: "/<repo>/"` ב-Vite. התאמה מקבילה של `start_url`, `scope`, קישורי Assets ו-Service Worker Scope; לא להשתמש בנתיבים מוחלטים ל-`/` שמדלגים על שם ה-Repository.
 - לאתר Root או Custom Domain הנתיב עשוי להיות `/`. יש להגדיר אותו לפי כתובת ה-Production האמיתית. [2]
@@ -264,12 +264,12 @@ type HistoryData = {
 **החלטה:** `public/icon.svg` נכתב ידנית (לוח בקוטר ~78% מהקנבס, בתוך ה-Safe Zone של Maskable, על רקע `#0A1628`). הקבצים `pwa-64/192/512`, `maskable-icon-512x512`, `apple-touch-icon-180x180` ו-`favicon.ico` נוצרים ממנו ב-`npm run generate-pwa-assets` (`@vite-pwa/assets-generator`, תצורה ב-`pwa-assets.config.ts`) ונשמרים ב-`public/`.
 **השלכות:** ה-CI אינו תלוי בכלי ההמרה. שינוי באייקון = עריכת ה-SVG והרצת הסקריפט מחדש.
 
-### ADR-8: `base: "/Simon/"` בכל הסביבות
-**הקשר:** האתר נפרס תחת `https://<user>.github.io/Simon/`, ובעיות נתיב (404 לנכסים, Scope של Service Worker) מתגלות בדרך כלל רק בפריסה.
-**החלטה:** `base: '/Simon/'` ב-`vite.config.ts` גם ב-dev וגם ב-preview; `start_url` ו-`scope` של ה-Manifest נגזרים מאותו קבוע. ה-Workflow `.github/workflows/deploy.yml` מריץ typecheck, בדיקות ו-Build לפני פריסה ל-Pages.
-**השלכות:** הכתובת המקומית היא `http://localhost:5173/Simon/` (dev) ו-`http://localhost:4173/Simon/` (preview). אם ה-Repository ישנה שם או יעבור ל-Custom Domain, יש לעדכן את הקבוע.
+### ADR-8: `base: "/Simon-game/"` בכל הסביבות
+**הקשר:** האתר נפרס תחת `https://<user>.github.io/Simon-game/`, ובעיות נתיב (404 לנכסים, Scope של Service Worker) מתגלות בדרך כלל רק בפריסה.
+**החלטה:** `base: '/Simon-game/'` ב-`vite.config.ts` גם ב-dev וגם ב-preview; `start_url` ו-`scope` של ה-Manifest נגזרים מאותו קבוע. ה-Workflow `.github/workflows/deploy.yml` מריץ typecheck, בדיקות ו-Build לפני פריסה ל-Pages.
+**השלכות:** הכתובת המקומית היא `http://localhost:5173/Simon-game/` (dev) ו-`http://localhost:4173/Simon-game/` (preview). אם ה-Repository ישנה שם או יעבור ל-Custom Domain, יש לעדכן את הקבוע.
 
 ### ADR-9: שם התקנה `Simon` ו-`id` מפורש ב-Manifest
 **הקשר:** ב-Chrome לאנדרואיד הופיעה הודעה שהאפליקציה "כבר מותקנת" למרות שלא הותקנה, ופתיחתה נכשלה ("Could not open app"), גם אחרי ניקוי נתוני האתר. ללא `id`, הדפדפן מזהה את האפליקציה לפי `start_url`, ולכן רישום התקנה ישן ושגוי במכשיר נצמד לאותה כתובת. המשתמש ביקש גם ששם האפליקציה המותקנת יהיה באנגלית.
-**החלטה:** הוספת `id: '/Simon/app'` ל-Manifest, ושינוי `name`/`short_name` ל-`Simon`. כותרת המסך ו-`<title>` נשארים "סיימון".
+**החלטה:** הוספת `id: '/Simon-game/app'` ל-Manifest, ושינוי `name`/`short_name` ל-`Simon`. כותרת המסך ו-`<title>` נשארים "סיימון".
 **השלכות:** הדפדפן רואה את האפליקציה כזהות חדשה ומתעלם מרישום ישן. אסור לשנות את ה-`id` בעתיד, אחרת התקנות קיימות ייחשבו לאפליקציה אחרת.

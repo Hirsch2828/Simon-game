@@ -22,7 +22,7 @@
    - Runtime: `react`, `react-dom`, `@fontsource/heebo`.
    - Dev: `typescript`, `vite`, `@vitejs/plugin-react`, `vitest`, `jsdom`, `@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`.
    - לא מתקינים עדיין `canvas-confetti` או `vite-plugin-pwa` (לא נדרשים כאן).
-3. `vite.config.ts`: `base: '/Simon/'` גם ב-dev (ADR-8), ותצורת Vitest (`environment: 'jsdom'`, קובץ setup שטוען את `jest-dom`).
+3. `vite.config.ts`: `base: '/Simon-game/'` גם ב-dev (ADR-8), ותצורת Vitest (`environment: 'jsdom'`, קובץ setup שטוען את `jest-dom`).
 4. סקריפטים ב-`package.json`:
    - `dev` – `vite`
    - `build` – `tsc -b && vite build`
@@ -135,7 +135,7 @@ src/
 ## 10. בדיקה ידנית לפני סיום
 
 - `npm run typecheck`, `npm run test`, `npm run build` עוברים.
-- הרצת `npm run dev` ופתיחה ב-`http://localhost:5173/Simon/` באמולציית מובייל (למשל iPhone SE ו-iPhone 14) – בדיקה שאין גלילה אופקית, שהטקסטים בעברית וב-RTL, והמיקומים בלוח נכונים.
+- הרצת `npm run dev` ופתיחה ב-`http://localhost:5173/Simon-game/` באמולציית מובייל (למשל iPhone SE ו-iPhone 14) – בדיקה שאין גלילה אופקית, שהטקסטים בעברית וב-RTL, והמיקומים בלוח נכונים.
 - מעבר בין המסכים לא מרענן את הדף (לא משתנה ה-URL ואין טעינה מחדש).
 - השוואה חזותית מול ה-Mockups (מצב "התחלה" ומסך "אודות").
 
@@ -153,9 +153,9 @@ src/
 
 - למלא ב-`CLAUDE.md` את **Run commands** (`npm run dev`, `npm run test`).
 - לסמן 🟡 ליד הכותרת של Milestone 1 ב-`MILESTONES.md`.
-- לא לבצע commit ולא push עד שהמשתמש יבקש. קישור ל-GitHub (Repository בשם `Simon`) ייעשה בפעם הראשונה שהמשתמש יבקש Push וייתן את הכתובת.
+- לא לבצע commit ולא push עד שהמשתמש יבקש. קישור ל-GitHub (`Hirsch2828/Simon-game`) ייעשה בפעם הראשונה שהמשתמש יבקש Push וייתן את הכתובת.
 
 ## 13. נקודות פתוחות
 
 - **איפה הקוד ירוץ:** הפרויקט יושב בתיקייה `Simon game` ב-iCloud של ה-Mac. Node.js צריך להיות מותקן על ה-Mac כדי להריץ `npm run dev` ולבדוק בעצמך. אם אינו מותקן – אדריך שלב אחר שלב לפני ה-Build.
-- **ה-Repository ב-GitHub:** לפי ARCHITECTURE §2.9 שמו `Simon`. הוא יידרש רק ב-Push, לא ב-Build.
+- **ה-Repository ב-GitHub:** `Hirsch2828/Simon-game` (ARCHITECTURE §2.9). הוא יידרש רק ב-Push, לא ב-Build.

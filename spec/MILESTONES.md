@@ -101,7 +101,7 @@
 
 **מה יש לממש:**
 - יצירת אייקון האפליקציה לפי הגדרת ה-App Icon ב-`DESIGN.md` (קובץ SVG מקור + PNG בגדלים 192 ו-512, כולל Maskable ו-Favicon).
-- וידוא שה-Repository `Simon` של המשתמש ציבורי לפני הפריסה; אם לא – עצור והדרך את המשתמש לשנות זאת. `base: "/Simon/"` ב-Vite.
+- וידוא שה-Repository `Simon-game` של המשתמש ציבורי לפני הפריסה; אם לא – עצור והדרך את המשתמש לשנות זאת. `base: "/Simon-game/"` ב-Vite.
 - הגדרת `vite-plugin-pwa` עם Manifest בעברית, אייקוני התקנה ומשאבי Precache באמצעות Workbox `generateSW`, כולל הנכסים הנחוצים למסכים ולצלילים.
 - ניהול עדכוני Service Worker ללא Reload כפוי באמצע משחק פעיל; טיפול ב-Cache ובנתיב הבסיס של GitHub Pages בהתאם למבנה ה-Repository.
 - Workflow של GitHub Actions המבצע `npm ci`, typecheck, בדיקות, Build ו-Deployment אוטומטי של `dist/` אל GitHub Pages ב-HTTPS בעקבות שינוי בענף הפריסה; הגדרת Pages לשימוש ב-GitHub Actions.
