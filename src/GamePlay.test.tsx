@@ -53,6 +53,19 @@ function watchPresentation(leadIn: number, length: number): ColorId[] {
   return seen;
 }
 
+async function resume() {
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'המשך משחק' }));
+  });
+}
+
+function setVisibility(value: 'hidden' | 'visible') {
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => value });
+  act(() => {
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+}
+
 function press(c: ColorId) {
   fireEvent.pointerDown(pad(c));
   fireEvent.pointerUp(window);
@@ -76,6 +89,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
 });
 
 /** Plays rounds 1..n correctly; returns the last sequence */
@@ -206,7 +220,7 @@ describe('full game', () => {
     expect(screen.getByText('המשחק מציג את הרצף')).toBeInTheDocument();
   });
 
-  it('going to About mid-game leaves no highlight, sound or timer (temporary cancel)', async () => {
+  it('going to About while the sequence is shown pauses at once, and home does not resume by itself', async () => {
     render(<App />);
     await startGame();
     advance(START_DELAY_MS + 100); // a color is lit and playing
@@ -218,20 +232,167 @@ describe('full game', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'בית' }));
     expect(litPads()).toEqual([]);
-    expect(screen.getByRole('button', { name: 'התחל משחק' })).toBeInTheDocument();
+    expect(screen.getByText('המשחק מושהה')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'המשך משחק' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'התחל משחק' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'שלב 1 מתוך 10' })).toBeInTheDocument();
+    advance(20000);
+    expect(litPads()).toEqual([]);
+    expect(screen.getByText('המשחק מושהה')).toBeInTheDocument();
   });
 
-  it('going to About while it is the player turn also cancels cleanly', async () => {
+  it('pausing mid-input replays the whole round on "המשך משחק", same round, no new color', async () => {
     render(<App />);
     await startGame();
-    const [first] = watchPresentation(START_DELAY_MS, 1);
-    fireEvent.pointerDown(pad(first)); // finger still down
+    const seq = playRounds(3);
+    fireEvent.pointerDown(pad(seq[0])); // finger still down on a correct pad
     fireEvent.click(screen.getByRole('button', { name: 'אודות' }));
     expect(vi.getTimerCount()).toBe(0);
     fireEvent.click(screen.getByRole('button', { name: 'בית' }));
-    expect(screen.getByRole('button', { name: 'התחל משחק' })).toBeInTheDocument();
     expect(litPads()).toEqual([]);
+    expect(screen.getByRole('heading', { name: 'שלב 3 מתוך 10' })).toBeInTheDocument();
+
+    const randomCalls = vi.mocked(randomColor).mock.calls.length;
+    await resume();
+    expect(screen.getByText('המשחק מציג את הרצף')).toBeInTheDocument();
+    expect(watchPresentation(START_DELAY_MS, 3)).toEqual(seq);
+    expect(screen.getByRole('heading', { name: 'שלב 3 מתוך 10' })).toBeInTheDocument();
+    expect(vi.mocked(randomColor).mock.calls.length).toBe(randomCalls);
+
+    // Partial input was dropped: the full sequence is needed again, then round 4 follows
+    seq.forEach(press);
+    const round4 = watchPresentation(2000, 4);
+    expect(round4.slice(0, 3)).toEqual(seq);
+  });
+
+  it('pausing between rounds shows the current round and resumes it', async () => {
+    render(<App />);
+    await startGame();
+    const seq = playRounds(2);
+    seq.forEach(press); // round 2 done, "שלב 2" still shown
+    advance(500);
+    expect(screen.getByRole('heading', { name: 'שלב 2 מתוך 10' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'אודות' }));
+    fireEvent.click(screen.getByRole('button', { name: 'בית' }));
+    expect(screen.getByRole('heading', { name: 'שלב 3 מתוך 10' })).toBeInTheDocument();
+    await resume();
+    const shown = watchPresentation(START_DELAY_MS, 3);
+    expect(shown.slice(0, 2)).toEqual(seq);
+  });
+
+  it('hiding the app pauses the same way; coming back does not resume', async () => {
+    render(<App />);
+    await startGame();
+    advance(START_DELAY_MS + 100);
+    setVisibility('hidden');
+    expect(audio.stopAll).toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+    expect(litPads()).toEqual([]);
+    setVisibility('visible');
+    advance(20000);
+    expect(litPads()).toEqual([]);
+    expect(screen.getByRole('button', { name: 'המשך משחק' })).toBeInTheDocument();
+
+    await resume();
+    const [first] = watchPresentation(START_DELAY_MS, 1);
+    press(first);
+    advance(2000);
+    expect(screen.getByRole('heading', { name: 'שלב 2 מתוך 10' })).toBeInTheDocument();
+  });
+
+  it('pagehide also pauses', async () => {
+    render(<App />);
+    await startGame();
+    watchPresentation(START_DELAY_MS, 1);
+    act(() => {
+      window.dispatchEvent(new Event('pagehide'));
+    });
+    expect(screen.getByRole('button', { name: 'המשך משחק' })).toBeInTheDocument();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('a double tap on "המשך משחק" starts only one presentation', async () => {
+    render(<App />);
+    await startGame();
+    advance(100);
+    fireEvent.click(screen.getByRole('button', { name: 'אודות' }));
+    fireEvent.click(screen.getByRole('button', { name: 'בית' }));
+    vi.mocked(audio.unlockAudio).mockClear();
+    await act(async () => {
+      const btn = screen.getByRole('button', { name: 'המשך משחק' });
+      fireEvent.click(btn);
+      fireEvent.click(btn);
+    });
+    expect(audio.unlockAudio).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'המשך משחק' })).not.toBeInTheDocument();
+    watchPresentation(START_DELAY_MS, 1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('stays paused with a message when audio cannot resume, and a retry works', async () => {
+    render(<App />);
+    await startGame();
+    advance(100);
+    setVisibility('hidden');
+    setVisibility('visible');
+    vi.mocked(audio.unlockAudio).mockResolvedValue(false);
+    await resume();
+    expect(screen.getByRole('alert')).toHaveTextContent('לא הצלחנו להפעיל את הצליל');
+    expect(screen.getByRole('button', { name: 'המשך משחק' })).toBeInTheDocument();
+    advance(5000);
+    expect(litPads()).toEqual([]);
+
+    vi.mocked(audio.unlockAudio).mockResolvedValue(true);
+    await resume();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    watchPresentation(START_DELAY_MS, 1);
+  });
+
+  it('a pause while audio is unlocking keeps the game paused', async () => {
+    render(<App />);
+    await startGame();
+    advance(100);
+    setVisibility('hidden');
+    let unlock!: (ok: boolean) => void;
+    vi.mocked(audio.unlockAudio).mockImplementation(() => new Promise((r) => (unlock = r)));
+    fireEvent.click(screen.getByRole('button', { name: 'המשך משחק' }));
+    setVisibility('hidden');
+    await act(async () => unlock(true));
+    advance(5000);
+    expect(litPads()).toEqual([]);
+    expect(screen.getByRole('button', { name: 'המשך משחק' })).toBeInTheDocument();
+  });
+
+  it('hiding the app after a loss does not change the result', async () => {
+    render(<App />);
+    await startGame();
+    const [first] = watchPresentation(START_DELAY_MS, 1);
+    press(wrongOf(first));
+    setVisibility('hidden');
+    advance(1000);
+    expect(screen.getByRole('dialog')).toHaveTextContent('נפסלת!');
+    expect(screen.queryByRole('button', { name: 'המשך משחק' })).not.toBeInTheDocument();
+  });
+
+  it('"המשך משחק" is not shown before a game starts', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'אודות' }));
+    fireEvent.click(screen.getByRole('button', { name: 'בית' }));
+    expect(screen.getByRole('button', { name: 'התחל משחק' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'המשך משחק' })).not.toBeInTheDocument();
+  });
+
+  it('a paused game can still be won after resuming', async () => {
+    render(<App />);
+    await startGame();
+    const seq = playRounds(10);
+    setVisibility('hidden');
+    setVisibility('visible');
+    await resume();
+    expect(watchPresentation(START_DELAY_MS, 10)).toEqual(seq);
+    seq.forEach(press);
+    advance(1000);
+    expect(screen.getByRole('dialog')).toHaveTextContent('כל הכבוד! ניצחת!');
   });
 
   it('never writes the active game to persistent storage', async () => {
@@ -239,6 +400,8 @@ describe('full game', () => {
     render(<App />);
     await startGame();
     playRounds(2);
+    fireEvent.click(screen.getByRole('button', { name: 'אודות' }));
+    setVisibility('hidden');
     expect(setItem).not.toHaveBeenCalled();
     setItem.mockRestore();
   });

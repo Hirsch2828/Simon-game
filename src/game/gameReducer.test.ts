@@ -108,11 +108,59 @@ describe('gameReducer', () => {
     expect(gameReducer(started(), { type: 'dismiss' }).status).toBe('presenting');
   });
 
-  it('abandon cancels an active game and invalidates its presentation', () => {
+  it('pause during presentation keeps the round and ignores the stale presentation', () => {
+    const s = completeRound(completeRound(started('green'), 'red'), 'yellow'); // round 3, presenting
+    const p = gameReducer(s, { type: 'pause' });
+    expect(p.status).toBe('paused');
+    expect(p.sequence).toEqual(s.sequence);
+    expect(p.round).toBe(3);
+    expect(p.completedRounds).toBe(2);
+    expect(p.gameId).toBe(s.gameId);
+    expect(p.presentationId).toBe(s.presentationId + 1);
+    expect(gameReducer(p, { type: 'presentationDone', presentationId: s.presentationId })).toBe(p);
+  });
+
+  it('pause during input drops partial input; presses while paused are ignored', () => {
+    const s = ready(completeRound(started('green'), 'red')); // round 2, awaiting input
+    const partial = gameReducer(s, { type: 'press', color: 'green', nextColor: 'blue' });
+    expect(partial.inputIndex).toBe(1);
+    const p = gameReducer(partial, { type: 'pause' });
+    expect(p.status).toBe('paused');
+    expect(p.inputIndex).toBe(0);
+    expect(gameReducer(p, { type: 'press', color: 'red', nextColor: 'blue' })).toBe(p);
+    expect(gameReducer(p, { type: 'press', color: wrong('red'), nextColor: 'blue' })).toBe(p);
+  });
+
+  it('pause does nothing when the game is idle, paused or over', () => {
+    expect(gameReducer(initialGameState, { type: 'pause' })).toBe(initialGameState);
+    const p = gameReducer(started(), { type: 'pause' });
+    expect(gameReducer(p, { type: 'pause' })).toBe(p);
+    const lost = gameReducer(ready(started('green')), { type: 'press', color: 'red', nextColor: 'red' });
+    expect(gameReducer(lost, { type: 'pause' })).toBe(lost);
+  });
+
+  it('resume replays the same sequence and round with a new presentation', () => {
+    const s = ready(completeRound(started('green'), 'red'));
+    const p = gameReducer(gameReducer(s, { type: 'press', color: 'green', nextColor: 'blue' }), { type: 'pause' });
+    const r = gameReducer(p, { type: 'resume' });
+    expect(r.status).toBe('presenting');
+    expect(r.resumed).toBe(true);
+    expect(r.sequence).toEqual(['green', 'red']);
+    expect(r.round).toBe(2);
+    expect(r.inputIndex).toBe(0);
+    expect(r.presentationId).toBe(p.presentationId + 1);
+    // The player must repeat from the start, and the next round is a normal one
+    const next = completeRound(r, 'yellow');
+    expect(next.round).toBe(3);
+    expect(next.sequence).toEqual(['green', 'red', 'yellow']);
+    expect(next.resumed).toBe(false);
+  });
+
+  it('resume only works from paused', () => {
     const s = started();
-    const a = gameReducer(s, { type: 'abandon' });
-    expect(a.status).toBe('idle');
-    expect(a.presentationId).toBe(s.presentationId + 1);
-    expect(gameReducer(a, { type: 'presentationDone', presentationId: s.presentationId })).toBe(a);
+    expect(gameReducer(s, { type: 'resume' })).toBe(s);
+    expect(gameReducer(initialGameState, { type: 'resume' })).toBe(initialGameState);
+    const r = run(s, { type: 'pause' }, { type: 'resume' });
+    expect(gameReducer(r, { type: 'resume' })).toBe(r);
   });
 });

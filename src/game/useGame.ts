@@ -38,6 +38,8 @@ export function useGame() {
   stateRef.current = state;
   const pressRef = useRef<PressState | null>(null);
   const startingRef = useRef(false);
+  // Bumped on every pause request; lets an awaited audio unlock notice it was interrupted
+  const pauseRequestsRef = useRef(0);
 
   // --- Sequence playback: one cancellable schedule per presentation ---
   useEffect(() => {
@@ -48,8 +50,9 @@ export function useGame() {
     const at = (ms: number, fn: () => void) => timers.push(setTimeout(fn, ms));
 
     let t: number;
-    if (round === 1) {
-      setShownRound(1);
+    if (round === 1 || state.resumed) {
+      // New game or resumed round: the current round number, then the whole sequence
+      setShownRound(round);
       t = START_DELAY_MS;
     } else {
       // The finished round stays on screen, then the next round number appears
@@ -156,8 +159,11 @@ export function useGame() {
     if (stateRef.current.status !== 'idle' || startingRef.current) return;
     startingRef.current = true;
     setAudioError(null);
+    const pausesBefore = pauseRequestsRef.current;
     try {
       const ok = await unlockAudio();
+      // The app was hidden or left for About while waiting: do not start in the background
+      if (pauseRequestsRef.current !== pausesBefore) return;
       if (!ok) {
         // Never run a silent game that pretends sound is playing
         setAudioError(AUDIO_ERROR_MESSAGE);
@@ -177,15 +183,49 @@ export function useGame() {
     dispatch({ type: 'dismiss' });
   }, []);
 
-  // Temporary for Milestone 2: leaving to About during a game cancels it
-  const abandon = useCallback(() => {
-    const { status } = stateRef.current;
+  // One pause path for About, hidden page and pagehide (ADR-3). Ended or idle games are not affected.
+  const pause = useCallback(() => {
+    pauseRequestsRef.current += 1;
+    const { status, round } = stateRef.current;
     if (status !== 'presenting' && status !== 'awaitingInput') return;
     finishPress();
     stopAll();
-    setShownRound(1);
-    dispatch({ type: 'abandon' });
+    setPresentedColor(null);
+    setShownRound(round);
+    dispatch({ type: 'pause' });
   }, [finishPress]);
+
+  // "המשך משחק": unlock audio from the gesture, then replay the whole round
+  const resumeGame = useCallback(async () => {
+    if (stateRef.current.status !== 'paused' || startingRef.current) return;
+    startingRef.current = true;
+    setAudioError(null);
+    const pausesBefore = pauseRequestsRef.current;
+    try {
+      const ok = await unlockAudio();
+      if (pauseRequestsRef.current !== pausesBefore) return;
+      if (!ok) {
+        setAudioError(AUDIO_ERROR_MESSAGE);
+        return;
+      }
+      dispatch({ type: 'resume' });
+    } finally {
+      startingRef.current = false;
+    }
+  }, []);
+
+  // Visibility Handler: hiding the app pauses; coming back does nothing (no auto resume)
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') pause();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', pause);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', pause);
+    };
+  }, [pause]);
 
   const isActive = state.status === 'presenting' || state.status === 'awaitingInput';
 
@@ -200,7 +240,8 @@ export function useGame() {
     pressDown,
     pressUp,
     dismiss,
-    abandon,
+    pause,
+    resumeGame,
   };
 }
 

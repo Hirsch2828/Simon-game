@@ -1,7 +1,7 @@
 import type { ColorId } from './colors';
 import { TOTAL_ROUNDS } from './config';
 
-export type GameStatus = 'idle' | 'presenting' | 'awaitingInput' | 'won' | 'lost';
+export type GameStatus = 'idle' | 'presenting' | 'awaitingInput' | 'paused' | 'won' | 'lost';
 
 export interface GameState {
   status: GameStatus;
@@ -16,6 +16,8 @@ export interface GameState {
   gameId: number;
   /** Bumped on every new presentation and on cancel; stale playback results are ignored */
   presentationId: number;
+  /** True when the current presentation replays a paused round (starts after START_DELAY_MS) */
+  resumed: boolean;
 }
 
 export type GameAction =
@@ -23,8 +25,8 @@ export type GameAction =
   | { type: 'presentationDone'; presentationId: number }
   | { type: 'press'; color: ColorId; nextColor: ColorId }
   | { type: 'dismiss' }
-  // Temporary for Milestone 2: leaving to About cancels the game. Replaced by pause in Milestone 3.
-  | { type: 'abandon' };
+  | { type: 'pause' }
+  | { type: 'resume' };
 
 export const initialGameState: GameState = {
   status: 'idle',
@@ -34,6 +36,7 @@ export const initialGameState: GameState = {
   completedRounds: 0,
   gameId: 0,
   presentationId: 0,
+  resumed: false,
 };
 
 // Pure state machine: no audio, timers or storage here (ARCHITECTURE §2.3 rule 4).
@@ -50,6 +53,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         completedRounds: 0,
         gameId: state.gameId + 1,
         presentationId: state.presentationId + 1,
+        resumed: false,
       };
 
     case 'presentationDone':
@@ -79,6 +83,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         inputIndex: 0,
         completedRounds: state.round,
         presentationId: state.presentationId + 1,
+        resumed: false,
       };
     }
 
@@ -86,9 +91,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.status !== 'won' && state.status !== 'lost') return state;
       return { ...initialGameState, gameId: state.gameId, presentationId: state.presentationId };
 
-    case 'abandon':
+    // ADR-3: keep sequence and round, drop partial input, invalidate the running presentation
+    case 'pause':
       if (state.status !== 'presenting' && state.status !== 'awaitingInput') return state;
-      return { ...initialGameState, gameId: state.gameId, presentationId: state.presentationId + 1 };
+      return { ...state, status: 'paused', inputIndex: 0, presentationId: state.presentationId + 1 };
+
+    // Replay the whole sequence of the same round; no new color
+    case 'resume':
+      if (state.status !== 'paused') return state;
+      return { ...state, status: 'presenting', inputIndex: 0, presentationId: state.presentationId + 1, resumed: true };
 
     default:
       return state;

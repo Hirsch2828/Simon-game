@@ -14,9 +14,11 @@ export default function HomeScreen({ game }: HomeScreenProps) {
   const { state, shownRound, litColor, resultVisible, audioError } = game;
   const { status } = state;
 
+  const showError = Boolean(audioError) && (status === 'idle' || status === 'paused');
   let statusText = '';
   let hint = '';
-  if (status === 'idle' && audioError) statusText = audioError;
+  if (status === 'paused') statusText = 'המשחק מושהה';
+  if (showError && audioError) statusText = audioError;
   if (status === 'presenting') statusText = 'המשחק מציג את הרצף';
   if (status === 'awaitingInput') {
     statusText = 'התור שלך';
@@ -30,21 +32,22 @@ export default function HomeScreen({ game }: HomeScreenProps) {
         שלב <bdi>{shownRound}</bdi> מתוך <bdi>{TOTAL_ROUNDS}</bdi>
       </h2>
       <p
-        className={`home-screen__status${audioError && status === 'idle' ? ' home-screen__status--error' : ''}`}
+        className={`home-screen__status${showError ? ' home-screen__status--error' : ''}`}
         aria-live="polite"
-        role={audioError && status === 'idle' ? 'alert' : undefined}
+        role={showError ? 'alert' : undefined}
       >
         {statusText}
       </p>
       <SimonBoard
         disabled={status !== 'awaitingInput'}
-        dimmed={status === 'presenting'}
+        dimmed={status === 'presenting' || status === 'paused'}
         litColor={litColor}
         onPadDown={game.pressDown}
         onPadUp={game.pressUp}
       />
       <div className="home-screen__action">
         {status === 'idle' && <PrimaryButton onClick={() => void game.startGame()}>התחל משחק</PrimaryButton>}
+        {status === 'paused' && <PrimaryButton onClick={() => void game.resumeGame()}>המשך משחק</PrimaryButton>}
         {hint && <p className="home-screen__hint">{hint}</p>}
       </div>
       {resultVisible && (status === 'won' || status === 'lost') && (
