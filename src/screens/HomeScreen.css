@@ -15,3 +15,17 @@
 .home-screen__action {
   margin-top: var(--space-4);
 }
+
+.home-screen__status--error {
+  color: var(--color-red);
+}
+
+.home-screen__action {
+  min-height: 52px;
+}
+
+.home-screen__hint {
+  color: var(--color-soft-gray);
+  text-align: center;
+  font-size: var(--fs-body);
+}

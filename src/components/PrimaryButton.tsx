@@ -1,6 +1,10 @@
-import type { ButtonHTMLAttributes } from 'react';
+import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import './PrimaryButton.css';
 
-export default function PrimaryButton({ className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" className={`primary-button ${className}`} {...props} />;
-}
+const PrimaryButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement>>(
+  function PrimaryButton({ className = '', ...props }, ref) {
+    return <button ref={ref} type="button" className={`primary-button ${className}`} {...props} />;
+  },
+);
+
+export default PrimaryButton;
